@@ -151,12 +151,15 @@ def construir_D_T_dron(p1, p2, e1, e2, fs, d):
 # 7. ECUACIÓN DIFERENCIAL UNIFICADA (ESTABLE)
 # ============================================================
 
-def integrar_ecuacion_unificada_estable(
-    D_t, T_t, F_xt,
-    c=343, k_D=1.0, k_T=1.0,
-    L=1.0, N=200,
-    CFL=0.9, pasos=2000,
-    lambda_damp=0.05):
+def integrar_ecuacion_unificada_estable( D_t, T_t, F_xt, lambda_damp=0.05):
+
+    k_D=1.0
+    k_T=1.0
+    L=1.0
+    N=200
+    pasos=2000
+    c=343
+    CFL=0.9
 
     dx = L / (N - 1)
     x = np.linspace(0, L, N)
@@ -202,14 +205,19 @@ def pipeline_dron(p1, p2, e1, e2, fs, d):
     #p1, p2, e1, e2, fs, d = adquirir_senales()  # Simula adquisición
     D_t, T_t, theta, alpha, m_eff = construir_D_T_dron(p1, p2, e1, e2, fs, d)
 
+    # Interpoladores de las señales reales
+    N_samples = len(p1)
+    t_señal = np.linspace(0, N_samples / fs, N_samples)
+    
+    p_mean = (p1 + p2) / 2  # presión media como excitación
+    interp_F = np.interp  # usamos np.interp directamente
+    
     def F_xt(x, t):
-        return np.zeros_like(x)
+        amp = np.interp(t, t_señal, p_mean)  # amplitud desde presión real
+        return amp * np.sin(np.pi * x)        # proyección sobre modo fundamental
 
     x, Phi_hist, dt = integrar_ecuacion_unificada_estable(
-        D_t, T_t, F_xt,
-        c=343, k_D=1.0, k_T=1.0,
-        L=1.0, N=200,
-        CFL=0.9, pasos=min(2000, len(D_t))
+        D_t, T_t, F_xt, lambda_damp=0.05
     )
 
     return {

@@ -1,3 +1,4 @@
+from microphones import adquirir_senales, pipeline_dron
 from spectrogram import log_mel_spectrogram, normalize_audio
 import matplotlib.pyplot as plt
 import librosa.display
@@ -20,7 +21,9 @@ def main():
     plt.colorbar()
     plt.title("Log-Mel Spectrogram")
     plt.show()
-    
+    p1, p2, e1, e2, fs, d = adquirir_senales()
+    r = pipeline_dron(p1, p2, e1, e2, fs, d)
+    print("Pipeline result:", r)
 
 
 if __name__ == "__main__":
