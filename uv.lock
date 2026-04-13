@@ -853,6 +853,7 @@ dependencies = [
     { name = "librosa" },
     { name = "matplotlib" },
     { name = "numpy" },
+    { name = "scipy" },
 ]
 
 [package.metadata]
@@ -861,6 +862,7 @@ requires-dist = [
     { name = "librosa", specifier = ">=0.11.0" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=2.4.4" },
+    { name = "scipy", specifier = ">=1.17.1" },
 ]
 
 [[package]]
