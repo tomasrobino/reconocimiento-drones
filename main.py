@@ -6,7 +6,7 @@ import librosa.display
 
 def main():
     normalize_audio("samples/input.wav", "normalized/output.wav")
-    log_mel_spec = log_mel_spectrogram("samples/1-1791-A-261.wav", sr=22050, n_mels=128)
+    log_mel_spec = log_mel_spectrogram("samples/B_S2_D1_067-bebop_000_.wav", sr=22050, n_mels=128)
     
     plt.figure(figsize=(10, 4))
     librosa.display.specshow(
