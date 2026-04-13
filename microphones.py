@@ -151,7 +151,7 @@ def construir_D_T_dron(p1, p2, e1, e2, fs, d):
 # 7. ECUACIÓN DIFERENCIAL UNIFICADA (ESTABLE)
 # ============================================================
 
-def integrar_ecuacion_unificada_estable( D_t, T_t, F_xt, ):
+def integrar_ecuacion_unificada_estable( D_t, T_t, F_xt ):
 
     K_D=1.0
     K_T=1.0
@@ -218,7 +218,7 @@ def pipeline_dron(p1, p2, e1, e2, fs, d):
         return amp * np.sin(np.pi * x)        # proyección sobre modo fundamental
 
     x, Phi_hist, dt = integrar_ecuacion_unificada_estable(
-        D_t, T_t, F_xt, lambda_damp=0.05
+        D_t, T_t, F_xt
     )
 
     return {
