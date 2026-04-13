@@ -151,19 +151,20 @@ def construir_D_T_dron(p1, p2, e1, e2, fs, d):
 # 7. ECUACIÓN DIFERENCIAL UNIFICADA (ESTABLE)
 # ============================================================
 
-def integrar_ecuacion_unificada_estable( D_t, T_t, F_xt, lambda_damp=0.05):
+def integrar_ecuacion_unificada_estable( D_t, T_t, F_xt, ):
 
-    k_D=1.0
-    k_T=1.0
+    K_D=1.0
+    K_T=1.0
     L=1.0
     N=200
-    pasos=2000
-    c=343
+    PASOS=2000
+    C=343
     CFL=0.9
+    LAMBDA_DAMP=0.05
 
     dx = L / (N - 1)
     x = np.linspace(0, L, N)
-    dt = CFL * dx / c
+    dt = CFL * dx / C
 
     Phi_prev = np.zeros(N)
     Phi = np.zeros(N)
@@ -171,10 +172,10 @@ def integrar_ecuacion_unificada_estable( D_t, T_t, F_xt, lambda_damp=0.05):
 
     historia = []
 
-    for n in range(pasos):
+    for n in range(PASOS):
         t = n * dt
         idx_t = min(n, len(D_t)-1)
-        gamma = k_D * D_t[idx_t] + k_T * T_t[idx_t]
+        gamma = K_D * D_t[idx_t] + K_T * T_t[idx_t]
 
         F = F_xt(x, t)
 
@@ -183,8 +184,8 @@ def integrar_ecuacion_unificada_estable( D_t, T_t, F_xt, lambda_damp=0.05):
 
         Phi_next = (
             2*Phi - Phi_prev
-            + dt**2 * (c**2 * d2Phi_dx2 - gamma * Phi + F)
-            - lambda_damp * dt * Phi_t
+            + dt**2 * (C**2 * d2Phi_dx2 - gamma * Phi + F)
+            - LAMBDA_DAMP * dt * Phi_t
         )
 
         Phi_t = (Phi_next - Phi_prev) / (2*dt)
