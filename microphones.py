@@ -203,29 +203,63 @@ def integrar_ecuacion_unificada_estable( D_t, T_t, F_xt ):
 # ============================================================
 
 def pipeline_dron(p1, p2, e1, e2, fs, d):
-    #p1, p2, e1, e2, fs, d = adquirir_senales()  # Simula adquisición
     D_t, T_t, theta, alpha, m_eff = construir_D_T_dron(p1, p2, e1, e2, fs, d)
 
-    # Interpoladores de las señales reales
     N_samples = len(p1)
     t_señal = np.linspace(0, N_samples / fs, N_samples)
-    
-    p_mean = (p1 + p2) / 2  # presión media como excitación
-    interp_F = np.interp  # usamos np.interp directamente
-    
-    def F_xt(x, t):
-        amp = np.interp(t, t_señal, p_mean)  # amplitud desde presión real
-        return amp * np.sin(np.pi * x)        # proyección sobre modo fundamental
+    p_mean = (p1 + p2) / 2
 
-    x, Phi_hist, dt = integrar_ecuacion_unificada_estable(
-        D_t, T_t, F_xt
-    )
+    def F_xt(x, t):
+        amp = np.interp(t, t_señal, p_mean)
+        return amp * np.sin(np.pi * x)
+
+    x, Phi_hist, dt = integrar_ecuacion_unificada_estable(D_t, T_t, F_xt)
+
+    # --- Features extraídas de Phi_hist ---
+
+    # 1. Energía temporal en cada punto espacial
+    energia_espacial = np.sum(Phi_hist**2, axis=0)  # shape (200,)
+
+    # 2. Centro de masa energético → dónde se concentra la perturbación
+    energia_total = np.sum(energia_espacial) + 1e-12
+    x_centroide = np.sum(x * energia_espacial) / energia_total  # escalar ∈ [0, 1]
+
+    # 3. Asimetría espacial → refinamiento de theta
+    # Si la energía se concentra en x<0.5, la fuente está más cerca del mic 1
+    asimetria = x_centroide - 0.5  # ∈ [-0.5, 0.5]
+    # Corrección pequeña sobre theta inicial
+    delta_theta = asimetria * np.pi  # mapea [-0.5, 0.5] → [-π/2, π/2]
+    theta_refinado = theta + 0.1 * delta_theta  # factor 0.1: no sobreescribir
+
+    # 4. Velocidad de propagación efectiva → refinamiento de alpha
+    # Comparamos energía en primera mitad vs segunda mitad temporal
+    mitad = Phi_hist.shape[0] // 2
+    E_primera = np.sum(Phi_hist[:mitad, :]**2)
+    E_segunda = np.sum(Phi_hist[mitad:, :]**2)
+    ratio_temporal = E_segunda / (E_primera + 1e-12)
+    # Si ratio > 1: la energía crece (dron se acerca), < 1: se aleja
+    delta_alpha = (ratio_temporal - 1.0) * 0.05
+    alpha_refinado = alpha + delta_alpha
+
+    # 5. Masa efectiva refinada desde amplitud máxima de Phi
+    amp_max = np.max(np.abs(Phi_hist))  # escalar
+    m_eff_refinada = np.mean(m_eff) * (1.0 + 0.05 * amp_max)
 
     return {
-        "direccion_rad": theta,
-        "altitud_rad": alpha,
-        "masa_efectiva_media": float(np.mean(m_eff)),
-        "x": x,
-        "Phi_hist": Phi_hist,
-        "dt": dt
+        # Estimaciones originales
+        "direccion_rad":        theta,
+        "altitud_rad":          alpha,
+        "masa_efectiva_media":  float(np.mean(m_eff)),
+        # Estimaciones refinadas por Phi_hist
+        "direccion_refinada_rad":       float(theta_refinado),
+        "altitud_refinada_rad":         float(alpha_refinado),
+        "masa_efectiva_refinada":       float(m_eff_refinada),
+        # Diagnóstico
+        "x_centroide":          float(x_centroide),
+        "ratio_temporal":       float(ratio_temporal),
+        "asimetria":            float(asimetria),
+        # Raw
+        "x":                    x,
+        "Phi_hist":             Phi_hist,
+        "dt":                   dt,
     }
